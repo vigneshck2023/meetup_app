@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import techImg from "../assets/tech.jpg";
+import meetupLogo from "../assets/meetup.png";
 
 export default function EventDetails() {
   const { id } = useParams();
@@ -9,6 +10,38 @@ export default function EventDetails() {
 
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const venues = [
+    { name: "Grand Convention Center", address: "123 Main Street, Bengaluru, India" },
+    { name: "Tech Park Auditorium", address: "456 IT Hub Road, Hyderabad, India" },
+    { name: "City Expo Hall", address: "789 Central Avenue, Mumbai, India" },
+    { name: "Innovation Hub", address: "12 Startup Lane, Chennai, India" },
+    { name: "Cultural Convention Hall", address: "88 Heritage Road, Delhi, India" },
+  ];
+
+  const dressCodes = [
+    "Smart Casuals",
+    "Formal Attire",
+    "Traditional Wear",
+    "Business Casuals",
+    "Ethnic Theme"
+  ];
+
+  const ageRestrictions = [
+    "18+ only",
+    "21+ only",
+    "All Ages Welcome",
+  ];
+
+  function getIndexFromId(eventId, listLength) {
+    let hash = 0;
+    for (let i = 0; i < eventId.length; i++) {
+      hash = (hash << 5) - hash + eventId.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash) % listLength;
+  }
 
   function formatDate(dateString) {
     if (!dateString) return "";
@@ -49,6 +82,33 @@ export default function EventDetails() {
     fetch(`https://meetup-application-h68v.vercel.app/events/${id}`)
       .then((res) => res.json())
       .then((data) => {
+        const venueIndex = getIndexFromId(id, venues.length);
+        const dressIndex = getIndexFromId(id, dressCodes.length);
+        const ageIndex = getIndexFromId(id, ageRestrictions.length);
+
+        data.venue = venues[venueIndex];
+
+        if (!data.description) {
+          data.description =
+            "Join us for an engaging evening filled with networking opportunities, insightful sessions, and interactive discussions on emerging industry trends.";
+        }
+        if (!data.dressCode) {
+          data.dressCode = dressCodes[dressIndex];
+        }
+        if (!data.ageRestriction) {
+          data.ageRestriction = ageRestrictions[ageIndex];
+        }
+        if (!data.tags || data.tags.length === 0) {
+          data.tags = ["Technology", "Networking", "Innovation"];
+        }
+        if (!data.speakers || data.speakers.length === 0) {
+          data.speakers = [
+            { name: "Amit Verma", role: "CTO, InnovateX" },
+            { name: "Sarah Lee", role: "AI Researcher" },
+            { name: "Ravi Kumar", role: "Product Designer" },
+          ];
+        }
+
         setEvent(data);
         setLoading(false);
       })
@@ -60,9 +120,31 @@ export default function EventDetails() {
 
   return (
     <div className="container my-4">
+      <div className="d-flex align-items-center justify-content-center mb-4">
+        <img
+          src={meetupLogo}
+          alt="Meetup Logo"
+          style={{ height: "60px", marginRight: "10px" }}
+        />
+        <h1 className="mb-0">Event Details</h1>
+      </div>
+
+      <div className="row mb-4">
+        <div className="col-md-12">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search by event name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
       <Link to="/" className="btn btn-outline-secondary mb-4">
         ← Back to Events
       </Link>
+
       <div className="row">
         <div className="col-md-8">
           <img
@@ -77,27 +159,20 @@ export default function EventDetails() {
               <strong>Hosted By:</strong> {event.host}
             </p>
           )}
-          {event.description && (
-            <>
-              <h5 className="mb-2">Details:</h5>
-              <p>{event.description}</p>
-            </>
+
+          <h5 className="mb-2">Details:</h5>
+          {event.description && <p>{event.description}</p>}
+          {event.dressCode && (
+            <p>
+              <strong>Dress Code:</strong> {event.dressCode}
+            </p>
           )}
-          {(event.dressCode || event.ageRestriction) && (
-            <>
-              <h5 className="mt-4">Additional Information:</h5>
-              {event.dressCode && (
-                <p>
-                  <strong>Dress Code:</strong> {event.dressCode}
-                </p>
-              )}
-              {event.ageRestriction && (
-                <p>
-                  <strong>Age Restrictions:</strong> {event.ageRestriction}
-                </p>
-              )}
-            </>
+          {event.ageRestriction && (
+            <p>
+              <strong>Age Restriction:</strong> {event.ageRestriction}
+            </p>
           )}
+
           <h5 className="mt-4">Event Tags:</h5>
           <div className="mb-4">
             {event.tags && event.tags.length > 0 ? (
@@ -111,26 +186,43 @@ export default function EventDetails() {
             )}
           </div>
         </div>
+
         <div className="col-md-4">
           <div className="card shadow-sm p-3 mb-4">
-            {(event.date || event.time) && (
-              <p>
-                <i className="bi bi-clock"></i>{" "}
-                {event.date && formatDate(event.date)} <br />
-                {event.time && formatTime(event.time)}
+            <h5 className="mb-3">Event Information</h5>
+            {event.date && (
+              <p className="mb-2">
+                <i className="bi bi-calendar-event"></i> {formatDate(event.date)}
               </p>
             )}
-            {event.location && (
-              <p>
-                <i className="bi bi-geo-alt"></i> {event.location}
+            {event.time && (
+              <p className="mb-2">
+                <i className="bi bi-clock"></i> {formatTime(event.time)}
               </p>
             )}
             {event.price && (
-              <p>
-                <strong>₹ {event.price}</strong>
+              <p className="mb-0">
+                <i className="bi bi-currency-rupee"></i> {event.price}
               </p>
             )}
           </div>
+
+          {event.venue && (
+            <div className="card shadow-sm p-3 mb-4">
+              <h5 className="mb-3">Venue Details</h5>
+              {event.venue.name && (
+                <p className="mb-2">
+                  <i className="bi bi-building"></i> {event.venue.name}
+                </p>
+              )}
+              {event.venue.address && (
+                <p className="mb-2">
+                  <i className="bi bi-geo-alt"></i> {event.venue.address}
+                </p>
+              )}
+            </div>
+          )}
+
           <h5 className="mt-4 mb-3">Speakers:</h5>
           <div className="d-flex gap-2 mb-3 flex-wrap">
             {event.speakers && event.speakers.length > 0 ? (
@@ -158,6 +250,7 @@ export default function EventDetails() {
               <p>No speakers listed</p>
             )}
           </div>
+
           <button className="btn btn-danger w-100">RSVP</button>
         </div>
       </div>
