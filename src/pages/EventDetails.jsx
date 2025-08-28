@@ -192,7 +192,7 @@ export default function EventDetails() {
             <h5 className="mb-3">Event Information</h5>
             {event.date && (
               <p className="mb-2">
-                <i className="bi bi-calendar-event"></i> {formatDate(event.date)}
+                <i className="bi bi-calendar-event"></i> <strong>Date: </strong> {formatDate(event.date)}
               </p>
             )}
             {event.time && (
@@ -201,10 +201,10 @@ export default function EventDetails() {
               </p>
             )}
             {event.price && (
-              <p className="mb-0">
-                <i className="bi bi-currency-rupee"></i> {event.price}
-              </p>
-            )}
+  <p className="mb-0">
+    <strong>Price:</strong> ₹{event.price}
+  </p>
+)}
           </div>
 
           {event.venue && (
